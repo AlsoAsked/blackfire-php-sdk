@@ -11,9 +11,10 @@
 
 namespace Blackfire\Bridge\Laravel;
 
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Http\Response as LaravelResponse;
+use Illuminate\Http\RedirectResponse as LaravelRedirectResponse;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class OctaneProfiler
 {
@@ -52,7 +53,7 @@ class OctaneProfiler
 
     /**
      * @param \Swoole\Http\Request       $request
-     * @param ?Response|RedirectResponse $response
+     * @param \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse|\Symfony\Component\HttpFoundation\Response|null $response
      */
     public function stop(Request $request, $response = null): bool
     {
@@ -75,7 +76,15 @@ class OctaneProfiler
         $this->probe->close();
         if ($response) {
             list($probeHeaderName, $probeHeaderValue) = explode(':', $this->probe->getResponseLine(), 2);
-            $response->header(strtolower("x-$probeHeaderName"), trim($probeHeaderValue));
+
+            $probeHeaderName = strtolower("x-$probeHeaderName");
+            $probeHeaderValue = trim($probeHeaderValue);
+
+            if ($response instanceof SymfonyResponse) {
+                $response->headers->set($probeHeaderName, $probeHeaderValue);
+            } else if ($response instanceof LaravelResponse || $response instanceof LaravelRedirectResponse) {
+                $response->header($probeHeaderName, $probeHeaderValue);
+            }
         }
         $this->reset();
 

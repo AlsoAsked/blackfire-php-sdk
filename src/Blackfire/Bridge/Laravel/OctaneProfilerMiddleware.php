@@ -13,6 +13,9 @@ namespace Blackfire\Bridge\Laravel;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as LaravelResponse;
+use Illuminate\Http\RedirectResponse as LaravelRedirectResponse;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class OctaneProfilerMiddleware
 {
@@ -26,7 +29,7 @@ class OctaneProfilerMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
+     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse|\Symfony\Component\HttpFoundation\Response)  $next
      *
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
@@ -39,7 +42,19 @@ class OctaneProfilerMiddleware
         try {
             $this->profiler->start($request);
             $response = $next($request);
-            \BlackfireProbe::setAttribute('http.status_code', $response->status());
+
+            /** @var int|null */
+            $statusCode = null;
+
+            if ($response instanceof SymfonyResponse) {
+                $statusCode = $response->getStatusCode();
+            } else if ($response instanceof LaravelResponse || $response instanceof LaravelRedirectResponse) {
+                $statusCode = $response->status();
+            }
+
+            if ($statusCode !== null) {
+                \BlackfireProbe::setAttribute('http.status_code', $statusCode);
+            }
         } finally {
             $this->profiler->stop($request, $response ?? null);
         }
