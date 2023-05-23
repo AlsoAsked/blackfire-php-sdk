@@ -11,7 +11,6 @@
 
 namespace Blackfire\Bridge\Laravel;
 
-use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as LaravelResponse;
 use Illuminate\Http\RedirectResponse as LaravelRedirectResponse;
@@ -33,10 +32,10 @@ class OctaneProfilerMiddleware
      *
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, \Closure $next)
     {
-        if (!class_exists(\BlackfireProbe::class)) {
-            return $next($request);
+        if (!method_exists(\BlackfireProbe::class, 'setAttribute')) {
+            return;
         }
 
         try {

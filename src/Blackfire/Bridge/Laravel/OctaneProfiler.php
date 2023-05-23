@@ -26,7 +26,7 @@ class OctaneProfiler
 
     public function start(Request $request): bool
     {
-        if (!class_exists(\BlackfireProbe::class)) {
+        if (!method_exists(\BlackfireProbe::class, 'setAttribute')) {
             return false;
         }
 
