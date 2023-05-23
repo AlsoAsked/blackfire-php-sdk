@@ -149,5 +149,9 @@ namespace {
         public static function getBrowserProbe($withTags = true)
         {
         }
+
+        public static function setAttribute($name, $value)
+        {
+        }
     }
 }
